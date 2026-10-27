@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Constituent Service Institute model of casework caseloads during Congressional transitions.">
+<title>Casework Transition Model</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Bodoni&family=Spectral:ital,wght@0,400;0,700;1,400&display=swap">
+<style>
+/* Layout: CSI paper page. Engraved double-rule masthead, inputs on a Shade panel beside results; stacks on phones. Single paper theme by design. */
+:root{
+  color-scheme: light;
+  --bone:#fcfaf6; --shade:#e8e2d6; --navy:#101f3c; --red:#a32a25; --deep-red:#7a1f1b;
+  --ink:#14120e; --grey:#5e5749; --navy-tint:#b9c2d2;
+  --display:"Libre Bodoni","Bodoni Moda",Didot,Georgia,serif;
+  --body:Spectral,Georgia,"Times New Roman",serif;
+}
+*{box-sizing:border-box}
+body{margin:0}
+body{background:var(--bone);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:20px;padding-block:28px 56px}
+.mast{border:6px double var(--navy);padding:22px 26px 20px}
+.eyebrow{font-size:.78rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--red);margin:0 0 4px}
+h1{font-family:var(--display);font-weight:400;font-size:2.2rem;line-height:1.2;margin:0 0 8px;color:var(--navy);text-wrap:balance}
+.mast p{margin:0;color:var(--grey);max-width:70ch}
+.grid{display:grid;grid-template-columns:330px minmax(0,1fr);gap:24px;margin-top:24px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
+.inputs{background:var(--shade);padding:20px;display:flex;flex-direction:column;gap:20px;border-top:4px solid var(--red)}
+fieldset{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+legend{font-family:var(--display);font-size:1.1rem;color:var(--navy);margin-bottom:6px;padding:0}
+.row{display:grid;grid-template-columns:1fr 96px;gap:8px;align-items:center}
+.row label{font-size:.9rem;line-height:1.35}
+input[type=number],input[type=date],input[type=month]{width:100%;font:inherit;font-size:.9rem;font-variant-numeric:tabular-nums lining-nums;padding:4px 7px;border:1px solid var(--grey);border-radius:0;background:var(--bone);color:var(--ink)}
+input[type=checkbox]{accent-color:var(--navy);width:16px;height:16px}
+input:focus-visible,button:focus-visible{outline:2px solid var(--navy);outline-offset:2px}
+.dist{display:grid;grid-template-columns:1fr .85fr .85fr .85fr;gap:6px;align-items:center;font-size:.88rem}
+.dist .h{font-size:.68rem;font-weight:700;color:var(--grey);text-transform:uppercase;letter-spacing:.08em;line-height:1.2}
+.check{display:flex;gap:8px;align-items:center;font-size:.92rem}
+.presets{display:flex;flex-wrap:wrap;gap:8px}
+button{font:inherit;font-size:.86rem;font-weight:700;padding:6px 12px;border-radius:0;border:1px solid var(--grey);background:var(--bone);color:var(--ink);cursor:pointer}
+button:hover{border-color:var(--navy);color:var(--navy)}
+button.primary{background:var(--red);border-color:var(--ink);color:var(--bone)}
+button.primary:hover{background:var(--deep-red);color:var(--bone)}
+.note{font-size:.8rem;line-height:1.5;color:var(--grey);margin:0}
+.err{font-size:.82rem;color:var(--red);font-weight:700;margin:0}
+.results{display:flex;flex-direction:column;gap:24px;min-width:0}
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.stat{padding:12px 14px;border:1px solid var(--shade);background:var(--bone)}
+.stat .k{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--grey);line-height:1.3}
+.stat .v{font-family:var(--display);font-size:1.6rem;line-height:1.3;color:var(--navy);font-variant-numeric:tabular-nums lining-nums}
+.stat .s{font-size:.82rem;color:var(--grey);line-height:1.4}
+.stat.alert{background:var(--navy);border-color:var(--navy)}
+.stat.alert .k,.stat.alert .s{color:var(--navy-tint)}
+.stat.alert .v{color:var(--bone)}
+.card{border-top:2px solid var(--ink);padding-top:12px}
+h2{font-family:var(--display);font-weight:400;font-size:1.4rem;color:var(--navy);margin:0 0 10px}
+.chart svg{width:100%;height:auto;display:block}
+.legend{display:flex;flex-wrap:wrap;gap:16px;font-size:.85rem;color:var(--ink);margin-top:8px}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.legend i{width:20px;height:0;border-top-width:3px;border-top-style:solid;display:inline-block}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.9rem;min-width:660px}
+th,td{padding:7px 10px;border-bottom:1px solid var(--shade);text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--grey);font-weight:700;vertical-align:bottom;border-bottom:2px solid var(--ink);line-height:1.3}
+td{font-variant-numeric:tabular-nums lining-nums}
+tr.event td{background:var(--shade)}
+td.hot{color:var(--red);font-weight:700}
+.tablehead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.tablehead h2{margin:0}
+.method{font-size:.9rem;color:var(--grey);max-width:75ch}
+.method p{margin:0 0 8px}
+.method strong{color:var(--ink)}
+.foot{margin-top:28px;padding-top:10px;border-top:1px solid var(--shade);font-size:.8rem;color:var(--grey)}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="mast">
+    <p class="eyebrow">Constituent Service Institute</p>
+    <h1>Casework Transition Model</h1>
+    <p>What happens to open caseloads in a two-Senator, two-Representative state when departing offices stop taking new cases, the remaining office absorbs their constituents, and new offices ramp up. Change any assumption and the results update.</p>
+  </header>
+
+  <div class="grid">
+    <form class="inputs" id="f" autocomplete="off">
+      <fieldset>
+        <legend>Scenario presets</legend>
+        <div class="presets">
+          <button type="button" data-preset="base">Long cases 90–150 days</button>
+          <button type="button" data-preset="long">Long cases 90–270 days</button>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>How long cases stay open</legend>
+        <div class="dist">
+          <span class="h">Bucket</span><span class="h">Share %</span><span class="h">Min days</span><span class="h">Max days</span>
+          <span>Fast</span><input type="number" id="p1" min="0" max="100" aria-label="Fast share"><input type="number" id="a1" min="0" aria-label="Fast min days"><input type="number" id="b1" min="1" aria-label="Fast max days">
+          <span>Middle</span><input type="number" id="p2" min="0" max="100" aria-label="Middle share"><input type="number" id="a2" min="0" aria-label="Middle min days"><input type="number" id="b2" min="1" aria-label="Middle max days">
+          <span>Long</span><input type="number" id="p3" min="0" max="100" aria-label="Long share"><input type="number" id="a3" min="0" aria-label="Long min days"><input type="number" id="b3" min="1" aria-label="Long max days">
+        </div>
+        <p class="note">Cases in each bucket close evenly between its min and max.</p>
+        <p class="err" id="distErr" hidden></p>
+      </fieldset>
+
+      <fieldset>
+        <legend>Cases opened per month</legend>
+        <div class="row"><label for="rS">Each Senate office</label><input type="number" id="rS" min="0"></div>
+        <div class="row"><label for="rH">Each House office</label><input type="number" id="rH" min="0"></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Which offices turn over</legend>
+        <label class="check"><input type="checkbox" id="dSB"> Senator B</label>
+        <label class="check"><input type="checkbox" id="dH1"> Representative 1</label>
+        <label class="check"><input type="checkbox" id="dH2"> Representative 2</label>
+        <p class="note">Senator A is the remaining office.</p>
+      </fieldset>
+
+      <fieldset>
+        <legend>Timeline</legend>
+        <div class="row"><label for="tStop">Departing offices stop intake</label><input type="date" id="tStop"></div>
+        <div class="row"><label for="tXfer">Departing offices transfer cases</label><input type="date" id="tXfer"></div>
+        <div class="row"><label for="tNew">New offices start intake</label><input type="date" id="tNew"></div>
+        <div class="row"><label for="tEnd">Show through</label><input type="month" id="tEnd"></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Where cases go</legend>
+        <div class="row"><label for="xShare">% of open cases transferred to Senator A</label><input type="number" id="xShare" min="0" max="100"></div>
+        <div class="row"><label for="redir">% of orphaned new cases that go to Senator A</label><input type="number" id="redir" min="0" max="100"></div>
+        <p class="note">The rest of the open cases close or are lost at transfer. The rest of the orphaned new cases go unserved.</p>
+      </fieldset>
+    </form>
+
+    <div class="results">
+      <div class="summary" id="summary"></div>
+
+      <section class="card chart">
+        <h2>Open caseload by office</h2>
+        <div id="chart"></div>
+        <div class="legend" id="legend"></div>
+      </section>
+
+      <section class="card">
+        <div class="tablehead">
+          <h2>Month-end open caseloads</h2>
+          <button type="button" class="primary" id="copy">Copy table for Sheets or Excel</button>
+        </div>
+        <div class="tablewrap"><table id="tbl"></table></div>
+        <p class="note" id="copyMsg" aria-live="polite"></p>
+      </section>
+
+      <section class="method">
+        <p><strong>How this works.</strong> Cases open evenly through each month at the monthly rates above. Each case stays open for a duration drawn from the three buckets. A mature office's open caseload is its monthly intake times the average months a case stays open.</p>
+        <p>Departing offices keep working their open cases until the transfer date, then hand the chosen share to Senator A. Transferred cases keep closing on their original schedule. From the intake stop until new offices start, the chosen share of the departing offices' would-be intake opens at Senator A instead. Senator A is assumed to close cases at its normal pace even when overloaded, so its peak is a floor.</p>
+      </section>
+    </div>
+  </div>
+  <p class="foot">Illustrative model by the Constituent Service Institute. Figures are estimates for a stylized small state, not data from any office.</p>
+</div>
+
+<script>
+const PRESETS={
+  base:{p1:30,a1:0,b1:30,p2:40,a2:30,b2:90,p3:30,a3:90,b3:150},
+  long:{p1:30,a1:0,b1:30,p2:40,a2:30,b2:90,p3:30,a3:90,b3:270}
+};
+const DEFAULTS={...PRESETS.base,rS:100,rH:90,dSB:true,dH1:true,dH2:true,
+  tStop:"2026-10-01",tXfer:"2026-12-31",tNew:"2027-02-01",tEnd:"2027-04",xShare:50,redir:100};
+const COL={red:"#a32a25",navy:"#101f3c",grey:"#5e5749",ink:"#14120e",shade:"#e8e2d6"};
+const $=id=>document.getElementById(id);
+const DAY=864e5, MO=30.4;
+function load(v){for(const k in v){const el=$(k);if(!el)continue;if(el.type==="checkbox")el.checked=v[k];else el.value=v[k];}}
+load(DEFAULTS);
+document.querySelectorAll("[data-preset]").forEach(b=>b.addEventListener("click",()=>{load(PRESETS[b.dataset.preset]);run();}));
+$("f").addEventListener("input",run);
+$("f").addEventListener("submit",e=>e.preventDefault());
+
+const num=id=>{const x=parseFloat($(id).value);return isFinite(x)?x:0};
+const toDay=s=>{const [y,m,d]=s.split("-").map(Number);return Date.UTC(y,m-1,d)/DAY};
+const fmtDate=d=>new Date(d*DAY).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric",timeZone:"UTC"});
+const fmtMonth=d=>new Date(d*DAY).toLocaleDateString("en-US",{month:"short",year:"numeric",timeZone:"UTC"});
+const r0=x=>Math.round(x).toLocaleString("en-US");
+
+function survival(buckets){
+  return age=>{let s=0;for(const b of buckets){const w=b.b-b.a;let u;
+    if(w<=0)u=age<b.a?1:0;else u=Math.min(1,Math.max(0,(b.b-age)/w));s+=b.p*u;}return s;};
+}
+function simulate(rateFn,S,d0,n){
+  const inflow=new Float64Array(n),open=new Float64Array(n),Sv=new Float64Array(n);
+  for(let i=0;i<n;i++){inflow[i]=rateFn(d0+i)/MO;Sv[i]=S(i+0.5);}
+  for(let t=0;t<n;t++){let s=0;for(let k=0;k<=t;k++){const f=inflow[t-k];if(f)s+=f*Sv[k];}open[t]=s;}
+  return open;
+}
+
+function run(){
+  const buckets=[1,2,3].map(i=>({p:num("p"+i)/100,a:num("a"+i),b:num("b"+i)}));
+  const shareSum=buckets.reduce((a,b)=>a+b.p,0);
+  const err=$("distErr");
+  if(Math.abs(shareSum-1)>0.001){err.textContent=`Bucket shares add to ${Math.round(shareSum*100)}%. Results below assume they're scaled to 100%.`;err.hidden=false;}
+  else err.hidden=true;
+  if(shareSum>0)buckets.forEach(b=>b.p/=shareSum);
+  const S=survival(buckets);
+  const avgDays=buckets.reduce((a,b)=>a+b.p*(b.a+b.b)/2,0);
+  const rS=num("rS"),rH=num("rH");
+  const dep={SB:$("dSB").checked,H1:$("dH1").checked,H2:$("dH2").checked};
+  const rate={SA:rS,SB:rS,H1:rH,H2:rH};
+  let tStop,tXfer,tNew,tEndD;
+  try{tStop=toDay($("tStop").value);tXfer=toDay($("tXfer").value);tNew=toDay($("tNew").value);
+    const [ey,em]=$("tEnd").value.split("-").map(Number);tEndD=Date.UTC(ey,em,0)/DAY;}catch(e){return;}
+  if(![tStop,tXfer,tNew,tEndD].every(isFinite))return;
+  const xShare=num("xShare")/100,redir=num("redir")/100;
+  const maxLong=Math.max(...buckets.map(b=>b.b));
+  const d0=tStop-Math.ceil(maxLong*2+400);
+  const n=tEndD-d0+1;
+  const orphanRate=["SB","H1","H2"].reduce((a,k)=>a+(dep[k]?rate[k]:0),0);
+
+  const series={};
+  series.SA=simulate(d=>rS+((d>=tStop&&d<tNew)?redir*orphanRate:0),S,d0,n);
+  const depAll=simulate(d=>d<tStop?orphanRate:0,S,d0,n);
+  const tx=new Float64Array(n);
+  for(let i=0;i<n;i++)if(d0+i>tXfer)tx[i]=xShare*depAll[i];
+  for(const k of ["SB","H1","H2"]){
+    if(!dep[k]){series[k]=simulate(()=>rate[k],S,d0,n);continue;}
+    const old=simulate(d=>d<tStop?rate[k]:0,S,d0,n);
+    const nw=simulate(d=>d>=tNew?rate[k]:0,S,d0,n);
+    series[k]=new Float64Array(n);
+    for(let i=0;i<n;i++){const d=d0+i;series[k][i]=(d>tXfer?0:old[i])+nw[i];}
+  }
+  const SAtot=new Float64Array(n);for(let i=0;i<n;i++)SAtot[i]=series.SA[i]+tx[i];
+  const matureS=rS*avgDays/MO,matureH=rH*avgDays/MO;
+
+  const rows=[];
+  const sd=new Date(tStop*DAY);let y=sd.getUTCFullYear(),m=sd.getUTCMonth();
+  let me=Date.UTC(y,m,0)/DAY;
+  while(me<=tEndD){rows.push({d:me});m++;me=Date.UTC(y,m,0)/DAY;}
+  if(tXfer+1<=tEndD&&tXfer+1>=d0)rows.push({d:tXfer+1,event:"After transfer"});
+  rows.sort((a,b)=>a.d-b.d||(a.event?1:-1));
+  const at=(arr,d)=>arr[d-d0];
+  const tableRows=rows.map(r=>{
+    const sa=at(SAtot,r.d);
+    return {label:r.event?`${fmtDate(r.d)} (after transfer)`:`End of ${fmtMonth(r.d)}`,event:!!r.event,
+      SA:sa,tx:at(tx,r.d),ratio:matureS?sa/matureS:0,SB:at(series.SB,r.d),H1:at(series.H1,r.d),H2:at(series.H2,r.d),
+      total:sa+at(series.SB,r.d)+at(series.H1,r.d)+at(series.H2,r.d)};
+  });
+
+  const iStart=Math.max(0,tStop-d0);let pk=0,pkI=iStart;
+  for(let i=iStart;i<n;i++)if(SAtot[i]>pk){pk=SAtot[i];pkI=i;}
+  const gapMonths=Math.max(0,(tNew-tStop))/MO;
+  const unserved=(1-redir)*orphanRate*gapMonths;
+  const xferAmt=xShare*(depAll[tXfer-d0]||0);
+  $("summary").innerHTML=`
+    <div class="stat"><div class="k">Avg. time a case is open</div><div class="v">${avgDays.toFixed(1)} days</div><div class="s">${(avgDays/MO).toFixed(2)} months</div></div>
+    <div class="stat"><div class="k">Mature caseload</div><div class="v">${r0(matureS)} / ${r0(matureH)}</div><div class="s">per Senate / House office</div></div>
+    <div class="stat alert"><div class="k">Senator A peak</div><div class="v">${r0(pk)}</div><div class="s">${(pk/matureS).toFixed(1)}× normal, ${fmtDate(d0+pkI)}</div></div>
+    <div class="stat"><div class="k">Cases moved at transfer</div><div class="v">${r0(xferAmt)}</div><div class="s">${unserved>0.5?`${r0(unserved)} new cases unserved in the gap`:`No new cases unserved`}</div></div>`;
+
+  $("tbl").innerHTML=`<thead><tr><th>Date</th><th>Senator A<br>(remaining)</th><th>× normal</th><th>Senator A cases<br>from transfer</th><th>Senator B${dep.SB?"<br>departing → new":""}</th><th>Rep. 1${dep.H1?"<br>departing → new":""}</th><th>Rep. 2${dep.H2?"<br>departing → new":""}</th><th>State total</th></tr></thead><tbody>`+
+    tableRows.map(r=>`<tr class="${r.event?"event":""}"><td>${r.label}</td><td class="${r.ratio>=1.25?"hot":""}">${r0(r.SA)}</td><td>${r.ratio.toFixed(2)}×</td><td>${r0(r.tx)}</td><td>${r0(r.SB)}</td><td>${r0(r.H1)}</td><td>${r0(r.H2)}</td><td>${r0(r.total)}</td></tr>`).join("")+"</tbody>";
+  window.__tsv=["Date\tSenator A (remaining)\tx normal\tSenator A cases from transfer\tSenator B\tRep. 1\tRep. 2\tState total",
+    ...tableRows.map(r=>[r.label,Math.round(r.SA),r.ratio.toFixed(2),Math.round(r.tx),Math.round(r.SB),Math.round(r.H1),Math.round(r.H2),Math.round(r.total)].join("\t"))].join("\n");
+
+  drawChart({d0,n,tStop,tXfer,tNew,tEndD,lines:[
+    {key:"Senator B",arr:series.SB,c:COL.navy,w:2.2},
+    {key:"Representative 1",arr:series.H1,c:COL.grey,w:2.2},
+    {key:"Representative 2",arr:series.H2,c:COL.grey,w:2.2,dash:"6 5"},
+    {key:"Senator A (remaining)",arr:SAtot,c:COL.red,w:3.4}],
+    base:matureS});
+}
+
+function drawChart(o){
+  const W=760,H=310,L=48,R=14,T=22,B=36;
+  const start=new Date((o.tStop)*DAY);const xs=Date.UTC(start.getUTCFullYear(),start.getUTCMonth(),0)/DAY;
+  const x0=xs,x1=o.tEndD;
+  let ymax=o.base;for(const l of o.lines)for(let d=x0;d<=x1;d++)ymax=Math.max(ymax,l.arr[d-o.d0]);
+  const step=ymax>800?200:ymax>400?100:50;ymax=Math.ceil(ymax*1.05/step)*step;
+  const X=d=>L+(d-x0)/(x1-x0)*(W-L-R),Y=v=>T+(1-v/ymax)*(H-T-B);
+  const font=`font-family="Spectral, Georgia, serif"`;
+  let g="";
+  for(let v=0;v<=ymax;v+=step)g+=`<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="${COL.shade}" stroke-width="1.2"/><text x="${L-6}" y="${Y(v)+4}" text-anchor="end" font-size="11.5" fill="${COL.grey}" ${font}>${v}</text>`;
+  g+=`<line x1="${L}" x2="${W-R}" y1="${Y(0)}" y2="${Y(0)}" stroke="${COL.ink}" stroke-width="1.6"/>`;
+  const sd=new Date(x0*DAY);let yy=sd.getUTCFullYear(),mm=sd.getUTCMonth()+1;
+  for(;;mm++){const d=Date.UTC(yy,mm,1)/DAY;if(d>x1)break;const lab=new Date(d*DAY).toLocaleDateString("en-US",{month:"short",timeZone:"UTC"});
+    g+=`<line x1="${X(d)}" x2="${X(d)}" y1="${H-B}" y2="${H-B+4}" stroke="${COL.ink}"/><text x="${X(d)}" y="${H-B+18}" text-anchor="middle" font-size="12" fill="${COL.ink}" ${font}>${lab}</text>`;}
+  const marks=[[o.tStop,"Intake stops"],[o.tXfer,"Transfer"],[o.tNew,"New offices open"]];
+  for(const [d,t] of marks){if(d<x0||d>x1)continue;g+=`<line x1="${X(d)}" x2="${X(d)}" y1="${T-8}" y2="${H-B}" stroke="${COL.grey}" stroke-dasharray="2 3" stroke-width="1"/><text x="${X(d)+4}" y="${T}" font-size="11" fill="${COL.grey}" ${font} font-style="italic">${t}</text>`;}
+  g+=`<line x1="${L}" x2="${W-R}" y1="${Y(o.base)}" y2="${Y(o.base)}" stroke="${COL.ink}" stroke-width="1" stroke-dasharray="1 4" stroke-linecap="round"/><text x="${W-R}" y="${Y(o.base)-6}" text-anchor="end" font-size="11" fill="${COL.grey}" ${font}>Normal Senate caseload, ${Math.round(o.base)}</text>`;
+  for(const l of o.lines){let p="";for(let d=x0;d<=x1;d++)p+=(d===x0?"M":"L")+X(d).toFixed(1)+" "+Y(l.arr[d-o.d0]).toFixed(1);
+    g+=`<path d="${p}" fill="none" stroke="${l.c}" stroke-width="${l.w}" stroke-linejoin="round" ${l.dash?`stroke-dasharray="${l.dash}"`:""}/>`;}
+  $("chart").innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Open caseload by office over time">${g}</svg>`;
+  const order=[o.lines[3],o.lines[0],o.lines[1],o.lines[2]];
+  $("legend").innerHTML=order.map(l=>`<span><i style="border-top-color:${l.c};border-top-style:${l.dash?"dashed":"solid"}"></i>${l.key}</span>`).join("")+`<span><i style="border-top-color:${COL.ink};border-top-style:dotted;border-top-width:2px"></i>Normal Senate caseload</span>`;
+}
+
+$("copy").addEventListener("click",()=>{
+  const msg=$("copyMsg");
+  if(!navigator.clipboard){msg.textContent="Copying isn't available here. Select the table and copy it manually.";return;}
+  navigator.clipboard.writeText(window.__tsv||"").then(()=>{msg.textContent="Copied. Paste into a sheet and the columns will line up.";},
+    ()=>{msg.textContent="Copying isn't available here. Select the table and copy it manually.";});
+});
+run();
+</script>
+
+</body>
+</html>
