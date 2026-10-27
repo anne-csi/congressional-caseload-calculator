@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Constituent Service Institute caseload calculator for casework offices.">
+<title>Caseload Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Bodoni&family=Spectral:ital,wght@0,400;0,700;1,400&display=swap">
+<style>
+/* Layout: CSI paper page. Double-rule masthead; mode switch; inputs on a Shade panel beside results; stacks on phones. Single paper theme by design. */
+:root{
+  color-scheme: light;
+  --bone:#fcfaf6; --shade:#e8e2d6; --navy:#101f3c; --red:#a32a25; --deep-red:#7a1f1b;
+  --ink:#14120e; --grey:#5e5749; --navy-tint:#b9c2d2;
+  --display:"Libre Bodoni","Bodoni Moda",Didot,Georgia,serif;
+  --body:Spectral,Georgia,"Times New Roman",serif;
+}
+*{box-sizing:border-box}
+body{margin:0}
+[hidden]{display:none!important}
+body{background:var(--bone);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:20px;padding-block:28px 56px}
+.mast{border:6px double var(--navy);padding:22px 26px 20px}
+.eyebrow{font-size:.78rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--red);margin:0 0 4px}
+h1{font-family:var(--display);font-weight:400;font-size:2.2rem;line-height:1.2;margin:0 0 8px;color:var(--navy);text-wrap:balance}
+.mast p{margin:0;color:var(--grey);max-width:72ch}
+.modes{display:flex;flex-wrap:wrap;gap:0;margin-top:24px;border:2px solid var(--navy);width:max-content;max-width:100%}
+.modes button{border:0;border-radius:0;padding:10px 18px;font-size:.95rem;background:var(--bone);color:var(--navy);min-height:44px}
+.modes button + button{border-left:2px solid var(--navy)}
+.modes button[aria-pressed="true"]{background:var(--navy);color:var(--bone)}
+.modes button:hover{color:var(--navy);background:var(--shade)}
+.modes button[aria-pressed="true"]:hover{background:var(--navy);color:var(--bone)}
+.modehelp{margin:8px 0 0;font-size:.92rem;color:var(--grey);max-width:72ch}
+.grid{display:grid;grid-template-columns:320px minmax(0,1fr);gap:24px;margin-top:20px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
+.inputs{background:var(--shade);padding:20px;display:flex;flex-direction:column;gap:20px;border-top:4px solid var(--red)}
+fieldset{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+legend{font-family:var(--display);font-size:1.15rem;color:var(--navy);margin-bottom:4px;padding:0}
+.help{font-size:.82rem;line-height:1.5;color:var(--grey);margin:0}
+.dist{display:grid;grid-template-columns:1fr .9fr .9fr .9fr;gap:6px;align-items:center;font-size:.9rem}
+.dist .h{font-size:.68rem;font-weight:700;color:var(--grey);text-transform:uppercase;letter-spacing:.08em;line-height:1.2}
+.dist .tot{font-size:.85rem;color:var(--grey)}
+.dist .tot.bad{color:var(--red);font-weight:700}
+.row{display:grid;grid-template-columns:1fr 96px;gap:8px;align-items:center}
+.row label{font-size:.92rem;line-height:1.35}
+input[type=number]{width:100%;font:inherit;font-size:.92rem;font-variant-numeric:tabular-nums lining-nums;padding:4px 7px;border:1px solid var(--grey);border-radius:0;background:var(--bone);color:var(--ink)}
+input:focus-visible,button:focus-visible,textarea:focus-visible{outline:2px solid var(--navy);outline-offset:2px}
+button{font:inherit;font-size:.88rem;font-weight:700;padding:7px 14px;border-radius:0;border:1px solid var(--grey);background:var(--bone);color:var(--ink);cursor:pointer}
+button:hover{border-color:var(--navy);color:var(--navy)}
+button.primary{background:var(--red);border-color:var(--ink);color:var(--bone)}
+button.primary:hover{background:var(--deep-red);color:var(--bone)}
+.err{font-size:.84rem;color:var(--red);font-weight:700;margin:0}
+.results{display:flex;flex-direction:column;gap:26px;min-width:0}
+.summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:520px){.summary{grid-template-columns:minmax(0,1fr)}}
+.stat{padding:12px 14px;border:1px solid var(--shade);background:var(--bone)}
+.stat .k{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--grey);line-height:1.3}
+.stat .v{font-family:var(--display);font-size:1.75rem;line-height:1.3;color:var(--navy);font-variant-numeric:tabular-nums lining-nums}
+.stat .s{font-size:.84rem;color:var(--grey);line-height:1.4}
+.stat.lead{background:var(--navy);border-color:var(--navy)}
+.stat.lead .k,.stat.lead .s{color:var(--navy-tint)}
+.stat.lead .v{color:var(--bone)}
+.card{border-top:2px solid var(--ink);padding-top:12px}
+h2{font-family:var(--display);font-weight:400;font-size:1.4rem;color:var(--navy);margin:0 0 6px}
+.card > p{margin:0 0 12px;color:var(--grey);font-size:.95rem;max-width:68ch}
+.chart svg{width:100%;height:auto;display:block}
+.legend{display:flex;flex-wrap:wrap;gap:18px;font-size:.86rem;margin-top:8px}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.legend i{width:22px;height:0;border-top:3px solid;display:inline-block}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.92rem;min-width:520px}
+th,td{padding:7px 10px;border-bottom:1px solid var(--shade);text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--grey);font-weight:700;vertical-align:bottom;border-bottom:2px solid var(--ink);line-height:1.3}
+td{font-variant-numeric:tabular-nums lining-nums}
+tr.mark td{background:var(--shade)}
+.bar{display:inline-block;height:8px;background:var(--navy);vertical-align:middle;margin-left:8px}
+.copybox{background:var(--shade);padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+.copybox ol{margin:0;padding-left:1.2em;font-size:.92rem}
+.copybox .actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.copymsg{font-size:.88rem;color:var(--navy);font-weight:700}
+textarea{width:100%;min-height:140px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.78rem;padding:8px;border:1px solid var(--grey);border-radius:0;background:var(--bone);color:var(--ink)}
+.method{font-size:.92rem;color:var(--grey);max-width:72ch}
+.method p{margin:0 0 8px}
+.method strong{color:var(--ink)}
+.foot{margin-top:28px;padding-top:10px;border-top:1px solid var(--shade);font-size:.8rem;color:var(--grey)}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="mast">
+    <p class="eyebrow">Constituent Service Institute</p>
+    <h1>Caseload Calculator</h1>
+    <p>Plug in how long your cases take to resolve. See the open caseload your team will carry, how quickly a new office gets there, or how fast a departing office's caseload winds down once it stops taking new cases.</p>
+  </header>
+
+  <div class="modes" role="group" aria-label="Choose a calculator">
+    <button type="button" id="mGrow" aria-pressed="true">New or ongoing office</button>
+    <button type="button" id="mWind" aria-pressed="false">Winding down</button>
+  </div>
+  <p class="modehelp" id="modeHelp"></p>
+
+  <div class="grid">
+    <form class="inputs" id="f" autocomplete="off">
+      <fieldset>
+        <legend>How long cases stay open</legend>
+        <p class="help">Sort your cases into three groups by how long they take to close. Use your CRM's closed-case reports if you have them, or your team's best estimate.</p>
+        <div class="dist">
+          <span class="h">Group</span><span class="h">Share of cases %</span><span class="h">Min days</span><span class="h">Max days</span>
+          <span>Fast</span><input type="number" id="p1" min="0" max="100" step="1" aria-label="Fast cases, share of cases"><input type="number" id="a1" min="0" aria-label="Fast cases, minimum days"><input type="number" id="b1" min="0" aria-label="Fast cases, maximum days">
+          <span>Middle</span><input type="number" id="p2" min="0" max="100" step="1" aria-label="Middle cases, share of cases"><input type="number" id="a2" min="0" aria-label="Middle cases, minimum days"><input type="number" id="b2" min="0" aria-label="Middle cases, maximum days">
+          <span>Long</span><input type="number" id="p3" min="0" max="100" step="1" aria-label="Long cases, share of cases"><input type="number" id="a3" min="0" aria-label="Long cases, minimum days"><input type="number" id="b3" min="0" aria-label="Long cases, maximum days">
+          <span class="tot">Total</span><span class="tot" id="tot">100%</span><span></span><span></span>
+        </div>
+        <p class="help" id="shareHelp">Shares are of the cases you open, not the cases open today.</p>
+        <p class="err" id="err" hidden></p>
+      </fieldset>
+
+      <fieldset id="growIn">
+        <legend>How many cases you open</legend>
+        <div class="row"><label for="opens">New cases opened per month</label><input type="number" id="opens" min="0"></div>
+      </fieldset>
+
+      <fieldset id="windIn" hidden>
+        <legend>Your office today</legend>
+        <div class="row"><label for="current">Open cases when you stop taking new ones</label><input type="number" id="current" min="0"></div>
+        <div class="row"><label for="months">Months until the office closes</label><input type="number" id="months" min="0" step="0.5"></div>
+        <p class="help">Assumes the office had been running steadily before it stopped intake, so its open cases are a normal mix of fast, middle and long.</p>
+      </fieldset>
+
+      <div><button type="button" id="reset">Reset to the example</button></div>
+      <p class="help" id="exHelp"></p>
+    </form>
+
+    <div class="results">
+      <div class="summary" id="summary"></div>
+
+      <section class="card chart">
+        <h2 id="chartH"></h2>
+        <p id="chartP"></p>
+        <div id="chart"></div>
+        <div class="legend" id="legend"></div>
+      </section>
+
+      <section class="card">
+        <h2>Month by month</h2>
+        <div class="tablewrap"><table id="tbl"></table></div>
+      </section>
+
+      <section class="copybox" aria-labelledby="copyh">
+        <h2 id="copyh" style="margin:0">Take it into Sheets or Excel</h2>
+        <ol>
+          <li>Click the button to copy a ready-made spreadsheet with your numbers and working formulas. It includes both calculators.</li>
+          <li>Click cell A1 in a blank Google Sheet or Excel workbook and paste.</li>
+          <li>Change the inputs in rows 4 to 6 and row 9 for a new or ongoing office, or cells I4 and I5 for a winding-down office. Everything else recalculates. Drag the last row of a table down to see more months.</li>
+        </ol>
+        <div class="actions">
+          <button type="button" class="primary" id="copy">Copy spreadsheet with formulas</button>
+          <span class="copymsg" id="copyMsg" aria-live="polite"></span>
+        </div>
+        <textarea id="tsv" readonly hidden aria-label="Spreadsheet text to copy"></textarea>
+      </section>
+
+      <section class="method" id="method"></section>
+    </div>
+  </div>
+  <p class="foot">Constituent Service Institute. A planning estimate, not a prediction: real intake rises and falls with the news, the season and agency backlogs.</p>
+</div>
+
+<script>
+const EXAMPLE={p1:30,a1:0,b1:30,p2:40,a2:30,b2:90,p3:30,a3:90,b3:150,opens:100,current:212,months:3};
+const D=30.4, MAXM=24;
+const $=id=>document.getElementById(id);
+let mode=(location.hash==="#winding-down")?"wind":"grow";
+function load(v){for(const k in v)$(k).value=v[k];}
+load(EXAMPLE);
+$("f").addEventListener("input",run);
+$("f").addEventListener("submit",e=>e.preventDefault());
+$("reset").addEventListener("click",()=>{load(EXAMPLE);run();});
+$("mGrow").addEventListener("click",()=>{mode="grow";run();});
+$("mWind").addEventListener("click",()=>{mode="wind";run();});
+const num=id=>{const x=parseFloat($(id).value);return isFinite(x)?x:0;};
+const r0=x=>Math.round(x).toLocaleString("en-US");
+const mo=x=>{const v=Math.round(x*10)/10;return v+(v===1?" month":" months");};
+// Days of "open time" a case contributes after t days of steady intake
+function I(t,a,b){if(t<=a)return t;if(t>=b)return (a+b)/2;return t-(t-a)*(t-a)/(2*(b-a));}
+
+const TEXT={
+  grow:{help:"For an office that is opening new cases: see the caseload it will carry once it levels off, and how quickly a new office gets there.",
+    ex:"The example uses the illustrative office from CSI's casework transitions post: 30% of cases close within 30 days, 40% in 30 to 90 days, 30% in 90 to 150 days, and 100 new cases a month.",
+    chartH:"A new office getting up to speed",chartP:"Open cases at the end of each month for an office that starts from zero and opens new cases at a steady rate.",
+    method:`<p><strong>How this works.</strong> Once an office has been open longer than its slowest cases take, it closes about as many cases each month as it opens, so its open caseload levels off. That level is the cases you open per month times the average months a case stays open. Within each group, cases are assumed to close evenly between the minimum and maximum days.</p><p>A new office climbs toward that level over its first few months and reaches it once its oldest cases hit the longest group's maximum. Long cases drive most of the result: lengthening the slowest group raises the caseload more than any other change.</p>`},
+  wind:{help:"For an office that has stopped taking new cases: see how quickly its open caseload clears, and what will still be open on the day the office closes.",
+    ex:"The example uses the same illustrative office: about 212 open cases when it stops intake on October 1, with the office closing three months later.",
+    chartH:"An office winding down",chartP:"Cases still open at the end of each month after the office stops taking new ones.",
+    method:`<p><strong>How this works.</strong> The calculator assumes the office had been opening cases at a steady rate before it stopped, so the cases open today are a normal mix: mostly middle and long cases, since fast ones clear quickly. From the day intake stops, each case closes on its usual schedule and nothing new comes in.</p><p>Fast cases clear first, then middle ones. What is left by the closing date is almost entirely long cases, the hardest ones to hand off. Those are the cases to plan transfers or warm handoffs for.</p>`}
+};
+
+let last=null;
+function run(){
+  $("mGrow").setAttribute("aria-pressed",mode==="grow");$("mWind").setAttribute("aria-pressed",mode==="wind");
+  $("growIn").hidden=mode!=="grow";$("windIn").hidden=mode!=="wind";
+  const T=TEXT[mode];
+  $("modeHelp").textContent=T.help;$("exHelp").textContent=T.ex;$("chartH").textContent=T.chartH;$("chartP").textContent=T.chartP;$("method").innerHTML=T.method;
+
+  const g=[1,2,3].map(i=>({p:num("p"+i),a:num("a"+i),b:num("b"+i)}));
+  const tot=g.reduce((s,x)=>s+x.p,0);
+  $("tot").textContent=Math.round(tot*10)/10+"%";
+  $("tot").classList.toggle("bad",Math.abs(tot-100)>0.01);
+  const errs=[];
+  if(g.some(x=>x.b<x.a))errs.push("Each group's max days must be at least its min days.");
+  if(tot<=0)errs.push("Enter a share of cases for at least one group.");
+  else if(Math.abs(tot-100)>0.01)errs.push(`Shares add to ${Math.round(tot*10)/10}%. Results scale them to 100%.`);
+  $("err").textContent=errs.join(" ");$("err").hidden=!errs.length;
+  $("tsv").value=buildTSV(g);
+  if(tot<=0||g.some(x=>x.b<x.a))return;
+  const w=g.map(x=>x.p/tot);
+  const avgDays=g.reduce((s,x,i)=>s+w[i]*(x.a+x.b)/2,0);
+  const fullDays=Math.max(...g.filter((x,i)=>w[i]>0).map(x=>x.b));
+  const S=t=>g.reduce((s,x,i)=>s+w[i]*I(t,x.a,x.b),0);
+  if(mode==="grow")grow(g,w,avgDays,fullDays,S);else wind(g,w,avgDays,fullDays,S);
+}
+
+function grow(g,w,avgDays,fullDays,S){
+  const opens=num("opens");
+  const mature=opens*avgDays/D;
+  const open=t=>opens/D*S(t);
+  const months=[];
+  for(let m=0;m<=MAXM;m++){const o=open(m*D);months.push({m,o,pct:mature?o/mature:0,closed:m?opens-(o-months[m-1].o):null});}
+  const m90=months.find(r=>r.pct>=0.9-1e-9);
+  const shareLong=avgDays?w[2]*(g[2].a+g[2].b)/2/avgDays:0;
+  $("summary").innerHTML=`
+    <div class="stat lead"><div class="k">Full open caseload</div><div class="v">${r0(mature)} cases</div><div class="s">once new cases and closures balance out</div></div>
+    <div class="stat"><div class="k">Average time a case is open</div><div class="v">${Math.round(avgDays)} days</div><div class="s">${(avgDays/D).toFixed(1)} months, so ${(avgDays/D).toFixed(1)}× monthly intake</div></div>
+    <div class="stat"><div class="k">New office ramp-up</div><div class="v">${m90?mo(m90.m):"24+ months"}</div><div class="s">to reach 90% of full caseload; 100% at about ${mo(fullDays/D)}</div></div>
+    <div class="stat"><div class="k">Carried by long cases</div><div class="v">${Math.round(shareLong*100)}%</div><div class="s">of open cases at full caseload, from ${Math.round(w[2]*100)}% of cases opened</div></div>`;
+  const showTo=Math.min(MAXM,Math.max(6,Math.ceil(fullDays/D)+1));
+  const rows=months.slice(1,showTo+1);
+  const fullIdx=rows.findIndex(r=>r.pct>=0.999);
+  $("tbl").innerHTML=`<thead><tr><th>Month</th><th>Open cases<br>at month end</th><th>% of full<br>caseload</th><th>Cases closed<br>that month</th><th style="text-align:left">Progress</th></tr></thead><tbody>`+
+    rows.map((r,i)=>`<tr class="${i===fullIdx?"mark":""}"><td>Month ${r.m}${i===fullIdx?" (full)":""}</td><td>${r0(r.o)}</td><td>${Math.round(r.pct*100)}%</td><td>${r0(r.closed)}</td><td style="text-align:left"><span class="bar" style="width:${Math.round(Math.min(1,r.pct)*120)}px" aria-hidden="true"></span></td></tr>`).join("")+"</tbody>";
+  drawChart({xmax:showTo,f:t=>open(t),ref:mature,refLabel:`Full caseload, ${r0(mature)}`,aria:`Open caseload for a new office by month, rising toward ${Math.round(mature)} cases`});
+  $("legend").innerHTML=`<span><i style="border-color:var(--navy)"></i>Open cases</span><span><i style="border-color:var(--red);border-top-style:dashed"></i>Full caseload</span>`;
+}
+
+function wind(g,w,avgDays,fullDays,S){
+  const C=num("current"),Tm=num("months");
+  const left=t=>avgDays?C*Math.max(0,1-S(t)/avgDays):0;
+  const leftByGroup=t=>g.map((x,i)=>avgDays?C*w[i]*((x.a+x.b)/2-I(t,x.a,x.b))/avgDays:0);
+  const atClose=left(Tm*D);
+  const byG=leftByGroup(Tm*D);
+  const longShare=atClose>0.5?byG[2]/atClose:null;
+  const clearM=fullDays/D;
+  const showTo=Math.min(MAXM,Math.max(Math.ceil(clearM),Math.ceil(Tm),3));
+  const months=[];
+  for(let m=0;m<=showTo;m++){const o=left(m*D);months.push({m,o,pct:C?o/C:0,closed:m?months[m-1].o-o:null});}
+  const firstMonthClosed=months[1]?months[1].closed:0;
+  $("summary").innerHTML=`
+    <div class="stat lead"><div class="k">Still open when the office closes</div><div class="v">${r0(atClose)} cases</div><div class="s">${C?Math.round(atClose/C*100):0}% of today's caseload, after ${mo(Tm)}</div></div>
+    <div class="stat"><div class="k">Long cases among those left</div><div class="v">${longShare===null?"None left":Math.round(longShare*100)+"%"}</div><div class="s">${longShare===null?"every case closes before the office does":"the hardest cases to hand off"}</div></div>
+    <div class="stat"><div class="k">Cleared in the first month</div><div class="v">${r0(firstMonthClosed)} cases</div><div class="s">${C?Math.round(firstMonthClosed/C*100):0}% of today's caseload; closures slow after that</div></div>
+    <div class="stat"><div class="k">Every case closed by</div><div class="v">${mo(clearM)}</div><div class="s">${Tm>=clearM?"before the office closes":`${mo(clearM-Tm)} after the office closes`}</div></div>`;
+  const closeRow=Math.round(Tm)===Tm?Tm:-1;
+  $("tbl").innerHTML=`<thead><tr><th>Month</th><th>Cases still open<br>at month end</th><th>% of today's<br>caseload</th><th>Cases closed<br>that month</th><th style="text-align:left">Remaining</th></tr></thead><tbody>`+
+    months.slice(1).map(r=>`<tr class="${r.m===closeRow?"mark":""}"><td>Month ${r.m}${r.m===closeRow?" (office closes)":""}</td><td>${r0(r.o)}</td><td>${Math.round(r.pct*100)}%</td><td>${r0(r.closed)}</td><td style="text-align:left"><span class="bar" style="width:${Math.round(Math.max(0,r.pct)*120)}px" aria-hidden="true"></span></td></tr>`).join("")+"</tbody>";
+  drawChart({xmax:showTo,f:t=>left(t),ref:null,vline:Tm,vlabel:"Office closes",aria:`Cases still open after intake stops, falling from ${Math.round(C)}; ${Math.round(atClose)} left when the office closes`});
+  $("legend").innerHTML=`<span><i style="border-color:var(--navy)"></i>Cases still open</span><span><i style="border-color:var(--red);border-top-style:dashed"></i>Office closes</span>`;
+}
+
+function drawChart(o){
+  const W=740,H=280,L=50,R=16,T=22,B=36;
+  const xmax=Math.max(1,o.xmax);
+  const fine=[];for(let s=0;s<=xmax*8;s++){const m=s/8;fine.push([m,o.f(m*D)]);}
+  let ymax=Math.max(o.ref||0,...fine.map(p=>p[1]),1);
+  const raw=ymax/4;const mag=Math.pow(10,Math.floor(Math.log10(raw)));const step=[1,2,2.5,5,10].map(s=>s*mag).find(s=>s>=raw);
+  ymax=Math.ceil(ymax*1.08/step)*step;
+  const X=m=>L+m/xmax*(W-L-R),Y=v=>T+(1-v/ymax)*(H-T-B);
+  const font='font-family="Spectral, Georgia, serif"';
+  let g="";
+  for(let v=0;v<=ymax+1e-9;v+=step)g+=`<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="#e8e2d6" stroke-width="1.2"/><text x="${L-8}" y="${Y(v)+4}" text-anchor="end" font-size="12" fill="#5e5749" ${font}>${Math.round(v).toLocaleString("en-US")}</text>`;
+  g+=`<line x1="${L}" x2="${W-R}" y1="${Y(0)}" y2="${Y(0)}" stroke="#14120e" stroke-width="1.6"/>`;
+  const tick=xmax>12?2:1;
+  for(let m=0;m<=xmax;m+=tick)g+=`<line x1="${X(m)}" x2="${X(m)}" y1="${H-B}" y2="${H-B+4}" stroke="#14120e"/><text x="${X(m)}" y="${H-B+19}" text-anchor="middle" font-size="12" fill="#14120e" ${font}>${m}</text>`;
+  g+=`<text x="${W-R}" y="${H-4}" text-anchor="end" font-size="11.5" fill="#5e5749" ${font} font-style="italic">${mode==="grow"?"months since the office started opening cases":"months since the office stopped taking new cases"}</text>`;
+  let p="";fine.forEach(([m,v],i)=>{p+=(i?"L":"M")+X(m).toFixed(1)+" "+Y(v).toFixed(1);});
+  g+=`<path d="${p}L${X(xmax).toFixed(1)} ${Y(0)}L${X(0)} ${Y(0)}Z" fill="#b9c2d2" fill-opacity=".45" stroke="none"/>`;
+  if(o.ref)g+=`<line x1="${L}" x2="${W-R}" y1="${Y(o.ref)}" y2="${Y(o.ref)}" stroke="#a32a25" stroke-width="2" stroke-dasharray="7 5"/><text x="${W-R}" y="${Y(o.ref)-7}" text-anchor="end" font-size="12" fill="#a32a25" font-weight="700" ${font}>${o.refLabel}</text>`;
+  if(o.vline!=null&&o.vline<=xmax){const x=X(o.vline),v=o.f(o.vline*D);
+    g+=`<line x1="${x}" x2="${x}" y1="${T-10}" y2="${Y(0)}" stroke="#a32a25" stroke-width="2" stroke-dasharray="7 5"/>`;
+    const anchor=o.vline>xmax*0.7?"end":"start",dx=anchor==="end"?-8:8;
+    g+=`<text x="${x+dx}" y="${T+2}" text-anchor="${anchor}" font-size="12" fill="#a32a25" font-weight="700" ${font}>${o.vlabel}: ${Math.round(v).toLocaleString("en-US")} cases left</text>`;
+    g+=`<circle cx="${x}" cy="${Y(v)}" r="5" fill="#a32a25" stroke="#14120e" stroke-width="1.5"/>`;}
+  g+=`<path d="${p}" fill="none" stroke="#101f3c" stroke-width="3" stroke-linejoin="round"/>`;
+  $("chart").innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${o.aria}">${g}</svg>`;
+}
+
+function buildTSV(g){
+  const rows=[];const set=(r,c,v)=>{while(rows.length<r)rows.push([]);const row=rows[r-1];while(row.length<c)row.push("");row[c-1]=v;};
+  const COL=c=>"ABCDEFGHIJKLMNOP".indexOf(c)+1;
+  const put=(cell,v)=>{const m=cell.match(/^([A-Z])(\d+)$/);set(+m[2],COL(m[1]),v);};
+  put("A1","Caseload Calculator, Constituent Service Institute");
+  put("A2","Edit the inputs in rows 4 to 6 and B9 (new or ongoing office) or I4 and I5 (winding-down office). Everything else recalculates. Drag the last row of a table down to add months.");
+  ["Group","Share of cases","Min days","Max days","Average days"].forEach((h,i)=>put("ABCDE"[i]+"3",h));
+  ["Fast","Middle","Long"].forEach((n,i)=>{const r=4+i;put("A"+r,n);put("B"+r,num("p"+(i+1))+"%");put("C"+r,num("a"+(i+1)));put("D"+r,num("b"+(i+1)));put("E"+r,`=(C${r}+D${r})/2`);});
+  put("A7","Total");put("B7","=SUM(B4:B6)");
+  put("A9","New cases opened per month");put("B9",num("opens"));
+  put("A10","Days per month");put("B10",30.4);
+  put("A12","New or ongoing office");
+  put("A13","Average days a case stays open");put("B13","=ROUND(SUMPRODUCT(B4:B6,E4:E6)/B7,1)");
+  put("A14","Average months a case stays open");put("B14","=ROUND(B13/B10,2)");
+  put("A15","Full open caseload");put("B15","=ROUND(B9*B13/B10,0)");
+  put("A16","Months until a new office reaches full caseload");put("B16","=ROUND(MAX(D4:D6)/B10,1)");
+  ["Month","Day","Open cases at month end","% of full caseload","Cases closed that month"].forEach((h,i)=>put("ABCDE"[i]+"18",h));
+  const term=(t,k)=>`$B$${k}*IF(${t}<=$C$${k},${t},IF(${t}>=$D$${k},($C$${k}+$D$${k})/2,${t}-(${t}-$C$${k})^2/(2*($D$${k}-$C$${k}))))`;
+  const sum=t=>`(${term(t,4)}+${term(t,5)}+${term(t,6)})/$B$7`;
+  const AVG="(SUMPRODUCT($B$4:$B$6,$E$4:$E$6)/$B$7)";
+  for(let m=0;m<=MAXM;m++){const r=19+m;
+    put("A"+r,m===0?0:`=A${r-1}+1`);put("B"+r,`=A${r}*$B$10`);
+    put("C"+r,`=ROUND($B$9/$B$10*${sum("B"+r)},0)`);
+    put("D"+r,`=IF($B$15=0,0,ROUND(100*C${r}/$B$15,0))`);
+    put("E"+r,m===0?"":`=$B$9-(C${r}-C${r-1})`);}
+  put("H3","Winding-down office");
+  put("H4","Open cases when intake stops");put("I4",num("current"));
+  put("H5","Months until the office closes");put("I5",num("months"));
+  put("H6","Cases still open when the office closes");put("I6",`=ROUND($I$4*MAX(0,1-${sum("($I$5*$B$10)")}/${AVG}),0)`);
+  put("H7","Share of today's caseload still open");put("I7",`=IF($I$4=0,0,ROUND(100*I6/$I$4,0))&"%"`);
+  put("H8","Months until every case is closed");put("I8","=ROUND(MAX(D4:D6)/B10,1)");
+  ["Month","Day","Cases still open","% of today's caseload","Cases closed that month"].forEach((h,i)=>put("HIJKL"[i]+"18",h));
+  for(let m=0;m<=MAXM;m++){const r=19+m;
+    put("H"+r,m===0?0:`=H${r-1}+1`);put("I"+r,`=H${r}*$B$10`);
+    put("J"+r,`=ROUND($I$4*MAX(0,1-${sum("I"+r)}/${AVG}),0)`);
+    put("K"+r,`=IF($I$4=0,0,ROUND(100*J${r}/$I$4,0))`);
+    put("L"+r,m===0?"":`=J${r-1}-J${r}`);}
+  return rows.map(r=>r.join("\t")).join("\n");
+}
+
+$("copy").addEventListener("click",()=>{
+  const text=$("tsv").value,msg=$("copyMsg"),ta=$("tsv");
+  const fallback=()=>{ta.hidden=false;ta.focus();ta.select();msg.textContent="Copying isn't available here. The text is selected below: copy it with Ctrl+C or Cmd+C.";};
+  if(!navigator.clipboard){fallback();return;}
+  navigator.clipboard.writeText(text).then(()=>{msg.textContent="Copied. Paste into cell A1 of a blank sheet.";},fallback);
+});
+run();
+</script>
+
+</body>
+</html>
